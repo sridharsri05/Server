@@ -1,3 +1,4 @@
+// controllers / dashboardControllers.js
 const dashboard = (req, res) => {
     const { role } = req.user;
     if (role === "admin") {

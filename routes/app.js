@@ -1,3 +1,5 @@
+// routes/app.js
+
 const express = require("express");
 const authController = require("../controllers/authController");
 const dashboardController = require("../controllers/dashboardController");

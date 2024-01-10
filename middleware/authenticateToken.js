@@ -1,3 +1,4 @@
+// middleware/authenticateToken.js
 const jwtUtils = require("../utils/jwtUtils");
 
 function authenticateToken(req, res, next) {
