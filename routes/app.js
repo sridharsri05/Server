@@ -13,6 +13,9 @@ router.post("/login", authController.login);
 
 // Protected Route
 router.get("/dashboard", authenticateToken, dashboardController.dashboard);
-router.get("/getusers", exampleController.getAllUsers);
+router.get("/getUsers", exampleController.getAllUsers);
+router.get("/",(req,res)=>{[
+res.json("App is working good to gooo ")
+]})
 
 module.exports = router;

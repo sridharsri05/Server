@@ -1,2 +1,2 @@
 require("dotenv").config();
-require("./Api/index.js");
+require("./index.js");
