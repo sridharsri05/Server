@@ -7,16 +7,9 @@ const config = require("../config.js");
 const routes = require("../routes/app.js");
 
 const app = express();
-
+const port = 3000;
 app.use(express.json());
-app.use(
-    cors({
-        origin: "*",
-        credentials: true,
-        methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-        allowedHeaders: "Content-Type, Authorization",
-    })
-);
+app.use(cors());
 
 // Connect to MongoDB
 mongoose
