@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "builds": [{ "src": "api/**/*.js", "use": "@vercel/node" }],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "src": "/(.*)", "dest": "/$1" }
+  ],
+  "env": {
+    "MONGODB_URI": "mongodb+srv://sridhar:sridharsri@cluster0.xoocedw.mongodb.net/?retryWrites=true&w=majority",
+    "JWT_SECRET":"lovemyself"
+  }
+}

@@ -1,11 +1,12 @@
-var express = require("express");
-var mongoose = require("mongoose");
-var cors = require("cors");
-var config = require("./config.js");
-var routes = require("./routes/app.js");
+// api/server.js
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+const serverless = require("serverless-http");
+const config = require("../config.js");
+const routes = require("../routes/app.js");
 
-var app = express();
-var port = 3000;
+const app = express();
 
 app.use(express.json());
 app.use(
@@ -14,7 +15,7 @@ app.use(
         credentials: true,
         methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
         allowedHeaders: "Content-Type, Authorization",
-    }),
+    })
 );
 
 // Connect to MongoDB
@@ -33,7 +34,5 @@ mongoose
 // Use routes
 app.use("/", routes);
 
-// Start the server
-app.listen(port, function () {
-    console.log("Server is running at http://localhost:" + port);
-});
+module.exports = app;
+module.exports.handler = serverless(app);
