@@ -15,7 +15,7 @@ router.post("/login", authController.login);
 router.get("/dashboard", authenticateToken, dashboardController.dashboard);
 router.get("/getUsers", exampleController.getAllUsers);
 router.get("/",(req,res)=>{[
-res.json("App is working good to gooo ")
+res.json("App is working good to goo buddy ")
 ]})
 
 module.exports = router;
