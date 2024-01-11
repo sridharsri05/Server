@@ -9,7 +9,19 @@ const routes = require("./routes/app.js");
 const app = express();
 
 app.use(express.json());
-app.use(cors());
+const allowedOrigins = ['http://localhost:5173']; // Add any other origins as needed
+
+app.use(cors({
+    origin: function (origin, callback) {
+        // Allow requests from allowedOrigins, '*' for any origin
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    }
+}));
+
 
 // Connect to MongoDB
 mongoose
