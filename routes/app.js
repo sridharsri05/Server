@@ -6,6 +6,7 @@ const dashboardController = require("../controllers/dashboardController");
 const authenticateToken = require("../middleware/authenticateToken");
 const exampleController = require("../controllers/exampleController");
 const imdbImageController = require("../controllers/imdbImage")
+const movieList = require("../controllers/getLatestmovies")
 const router = express.Router();
 
 // Auth Routes
@@ -15,6 +16,7 @@ router.post("/login", authController.login);
 // Protected Route
 router.get("/dashboard", authenticateToken, dashboardController.dashboard);
 router.get("/getUsers", exampleController.getAllUsers);
+router.post("/getLatestMovies", movieList.getLatestMovies)
 router.get("/", (req, res) => {
     [
         res.json("App is working good to goo buddy ")
