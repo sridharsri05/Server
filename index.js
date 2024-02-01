@@ -10,7 +10,10 @@ const routes = require("./routes/app.js");
 const app = express();
 
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: 'https://movie-app-ruddy-nine.vercel.app' // Replace this with your frontend origin
+}));
+
 
 // Connect to MongoDB
 mongoose
