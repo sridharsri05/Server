@@ -10,9 +10,14 @@ const routes = require("./routes/app.js");
 const app = express();
 
 app.use(express.json());
-app.use(cors({
-  origin: 'https://movie-app-ruddy-nine.vercel.app' // Replace this with your frontend origin
-}));
+const corsOptions = {
+    origin: "https://movie-app-ruddy-nine.vercel.app",
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    preflightContinue: false,
+    optionsSuccessStatus: 204
+};
+
+app.use(cors(corsOptions));
 
 
 // Connect to MongoDB
