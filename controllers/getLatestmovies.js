@@ -9,7 +9,7 @@ const getLatestMovies = async (req, res) => {
     try {
         // Use Axios to fetch details for each IMDb ID directly from req.body
         const movieDetailsPromises = req.body.imdbIds.map((imdbId) => {
-            return axios.get(`http://www.omdbapi.com/?apikey=${OMBD_API_KEY}&i=${imdbId}`);
+            return axios.get(`https://www.omdbapi.com/?apikey=${OMBD_API_KEY}&i=${imdbId}`);
         });
 
         const movieDetailsResponses = await Promise.all(movieDetailsPromises);
