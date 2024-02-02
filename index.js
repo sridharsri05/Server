@@ -11,7 +11,7 @@ const app = express();
 
 app.use(express.json());
 const corsOptions = {
-    origin: "https://movie-app-ruddy-nine.vercel.app/",
+    origin: "https://movie-app-ruddy-nine.vercel.app",
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
     preflightContinue: false,
     optionsSuccessStatus: 204
