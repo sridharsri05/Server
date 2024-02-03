@@ -1,4 +1,5 @@
 // utils/jwtUtils.js
+
 var jwt = require("jsonwebtoken");
 var config = require("../config");
 
@@ -9,7 +10,13 @@ var generateToken = function (userId, role) {
 };
 
 var verifyToken = function (token) {
-    return jwt.verify(token, config.JWT_SECRET);
+    try {
+        const decoded = jwt.verify(token, config.JWT_SECRET);
+        return decoded;
+    } catch (error) {
+        // Token is invalid or expired
+        throw new Error('Invalid or expired token');
+    }
 };
 
 module.exports = {

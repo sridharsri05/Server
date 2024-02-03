@@ -28,7 +28,8 @@ router.get("/", (req, res) => {
         res.json("App is working good to goo buddy ")
     ]
 })
-router.post("/imdb-image", imdbImageController.imdbImage)
+router.post("/imdb-image", imdbImageController.imdbImage);
+router.post("/googleSignin", authController.google)
 
 router.get('/api/vapi/movie/new/:page', proxyApi, apiProxy);
 

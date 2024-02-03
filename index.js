@@ -24,10 +24,10 @@ mongoose
     .catch((error) => {
         console.error("MongoDB connection error:", error);
     });
-// const port = 3001;
-// app.listen(port, () => {
-//     console.log(`Server is running on port ${port}`);
-// });
+const port = 3001;
+app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
+});
 // Use routes
 app.use("/", routes);
 module.exports = app;

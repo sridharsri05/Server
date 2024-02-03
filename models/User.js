@@ -6,7 +6,11 @@ var userSchema = new mongoose.Schema({
     email: String,
     password: String,
     role: String,
-});
+    profilePicture: {
+        type: String,
+        default: "",
+    },
+}, { timestamps: true });
 
 var User = mongoose.model('User', userSchema);
 

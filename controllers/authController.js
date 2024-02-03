@@ -42,6 +42,60 @@ const login = async function (req, res) {
         res.status(500).json({ status: 'error', message: 'Internal Server Error' });
     }
 };
+const google = async (req, res) => {
+    try {
+        const { email, username, photo } = req.body;
+        const user = await User.findOne({ email });
+        if (user) {
+            // If the user exists, generate a token for the user
+            const token = jwtUtils.generateToken({
+                _id: user._id,
+            });
+
+            // Since the user exists, you probably want to return some user information
+            // excluding the password for security reasons
+            const { password: hashedPassword, ...rest } = user._doc;
+
+            // Return the user information and the token
+            res.status(200).json({
+                status: "success",
+                message: "User found",
+                token,
+                user: rest,
+            });
+        } else {
+            // If the user doesn't exist, create a new user
+            const generatePassword = Math.random().toString(36).slice(-8);
+            const hashedPassword = await bcrypt.hash(generatePassword, 10); // Await the hashing operation
+
+            // Create a new user with the provided details
+            const newUser = new User({
+                username: username.split(" ").join("").toLowerCase(),
+                email: email,
+                password: hashedPassword,
+                profilePicture: photo
+            });
+
+            // Save the new user to the database
+            await newUser.save();
+
+            // Generate a token for the new user
+            const token = jwtUtils.generateToken({ id: newUser._id });
+
+            // Return the token and the user information (excluding password)
+            const { password: hashedPassword2, ...rest } = newUser._doc;
+            res.status(200).json({
+                status: "success",
+                message: "User successfully created",
+                token,
+                user: rest, // Return the user information
+            });
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ status: 'error', message: 'Internal Server Error' });
+    }
+}
 
 const signup = async function (req, res) {
     try {
@@ -74,4 +128,5 @@ const signup = async function (req, res) {
 module.exports = {
     login,
     signup,
+    google
 };
