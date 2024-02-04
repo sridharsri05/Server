@@ -73,7 +73,8 @@ const google = async (req, res) => {
                 username: username.split(" ").join("").toLowerCase(),
                 email: email,
                 password: hashedPassword,
-                profilePicture: photo
+                profilePicture: photo,
+                role: role || 'user',
             });
 
             // Save the new user to the database
