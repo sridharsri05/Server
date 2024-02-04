@@ -50,6 +50,9 @@ const google = async (req, res) => {
             // If the user exists, generate a token for the user
             const token = jwtUtils.generateToken({
                 _id: user._id,
+                 username: user.username,
+            email: user.email,
+            role: user.role,
             });
 
             // Since the user exists, you probably want to return some user information
@@ -74,14 +77,16 @@ const google = async (req, res) => {
                 email: email,
                 password: hashedPassword,
                 profilePicture: photo,
-                role: role || 'user',
+                role:'user',
             });
 
             // Save the new user to the database
             await newUser.save();
 
             // Generate a token for the new user
-            const token = jwtUtils.generateToken({ id: newUser._id });
+            const token = jwtUtils.generateToken({ _id: newUser._id , username: newUser.username,
+            email: newUser.email,
+            role: newUser.role,});
 
             // Return the token and the user information (excluding password)
             const { password: hashedPassword2, ...rest } = newUser._doc;
@@ -94,7 +99,7 @@ const google = async (req, res) => {
         }
     } catch (error) {
         console.error(error);
-        res.status(500).json({ status: 'error', message: 'Internal Server Error' });
+        res.status(500).json({ status: 'error', message: error });
     }
 }
 
