@@ -11,17 +11,48 @@ const apiProxy = createProxyMiddleware('/api', {
     },
 });
 
-
 const proxyApi = async (req, res) => {
     try {
         const { page } = req.params;
         const response = await axios.get(`${backendApiUrl}/vapi/movie/new/${page}`);
         res.json(response.data);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Internal server error' });
+        console.error({ error });
+        res.status(500).json({ error: 'Internal server error', error });
+    }
+}
+const proxyAddmovies = async (req, res) => {
+    try {
+        const { page } = req.params;
+        const response = await axios.get(`${backendApiUrl}/vapi/movie/add/${page}`);
+        res.json(response.data);
+    } catch (error) {
+        console.error({ error });
+        res.status(500).json({ error: 'Internal server error', error });
+    }
+}
+const proxyTvApi = async (req, res) => {
+    try {
+        const { page } = req.params;
+        const response = await axios.get(`${backendApiUrl}/vapi/tv/new/${page}`);
+        res.json(response.data);
+    } catch (error) {
+        console.error({ error });
+        res.status(500).json({ error: 'Internal server error', error });
+    }
+}
+const proxyTvAdd = async (req, res) => {
+    try {
+        const { page } = req.params;
+        const response = await axios.get(`${backendApiUrl}/vapi/tv/new/${page}`);
+        res.json(response.data);
+    } catch (error) {
+        console.error({ error });
+        res.status(500).json({ error: 'Internal server error', error });
     }
 }
 
 
-module.exports = { apiProxy, proxyApi }
+module.exports = { apiProxy, proxyApi, proxyAddmovies, proxyTvAdd, proxyTvApi }
+
+
