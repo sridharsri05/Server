@@ -25,7 +25,8 @@
 const axios = require("axios");
 const { imdbImage } = require("./imdbImage"); // Import imdbImage function
 
-const OMBD_API_KEY = "8d58c823";
+// const OMBD_API_KEY = "8d58c823";
+const OMBD_API_KEY = "78532d38";
 
 const getLatestMovies = async (req, res) => {
     try {
