@@ -24,6 +24,7 @@ router.get("/dashboard", authenticateToken, dashboardController.dashboard);
 router.get("/getUsers", exampleController.getAllUsers);
 router.post("/getLatestMovies", movieList.getLatestMovies)
 router.post("/getAddedMovies", movieList.getAddedMovies)
+router.post("/getAddedShows", movieList.getAddedTvshows)
 router.get("/", (req, res) => {
     [
         res.json("App is working good to goo buddy ")
