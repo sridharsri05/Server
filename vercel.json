@@ -10,9 +10,9 @@
     {
       "src": "/(.*)",
       "dest": "index.js",
-       "methods": ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+       "methods": ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS","HEAD"],
       "headers": {
-        "Access-Control-Allow-Origin":"https://movie-app-ruddy-nine.vercel.app",
+        "Access-Control-Allow-Origin":"*",
       }
     }
   ]
