@@ -120,7 +120,6 @@ const signup = async function (req, res) {
             email,
             password: hashedPassword,
             role: role || 'user',
-            profilePicture,
         });
 
         await newUser.save();
