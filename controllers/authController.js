@@ -24,6 +24,7 @@ const login = async function (req, res) {
             username: user.username,
             email: user.email,
             role: user.role,
+            profilePicture:user.profilePicture,
         });
 
         res.json({
@@ -35,6 +36,7 @@ const login = async function (req, res) {
                 username: user.username,
                 email: user.email,
                 role: user.role,
+                profilePicture:user.profilePicture,
             },
         });
     } catch (error) {
@@ -49,10 +51,11 @@ const google = async (req, res) => {
         if (user) {
             // If the user exists, generate a token for the user
             const token = jwtUtils.generateToken({
-                _id: user._id,
-                 username: user.username,
+            _id: user._id,
+            username: user.username,
             email: user.email,
             role: user.role,
+            profilePicture:user.profilePicture,
             });
 
             // Since the user exists, you probably want to return some user information
@@ -84,9 +87,15 @@ const google = async (req, res) => {
             await newUser.save();
 
             // Generate a token for the new user
-            const token = jwtUtils.generateToken({ _id: newUser._id , username: newUser.username,
-            email: newUser.email,
-            role: newUser.role,});
+            const token = jwtUtils.generateToken(
+                { 
+                    _id: newUser._id , 
+                    username: newUser.username,
+                    email: newUser.email,
+                    role: newUser.role,
+                    profilePicture:newUser.profilePicture,
+                
+                });
 
             // Return the token and the user information (excluding password)
             const { password: hashedPassword2, ...rest } = newUser._doc;
@@ -127,7 +136,7 @@ const signup = async function (req, res) {
         res.status(201).json({ status: 'success', message: 'User created successfully' });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ status: 'error', message: 'Internal Server Error' });
+        res.status(500).json({ status: 'error', message: 'Backend Server Error' });
     }
 };
 
