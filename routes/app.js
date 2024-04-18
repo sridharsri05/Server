@@ -8,6 +8,7 @@ const exampleController = require("../controllers/exampleController");
 const imdbImageController = require("../controllers/imdbImage")
 const movieList = require("../controllers/getLatestmovies");
 const { proxyApi, apiProxy, proxyAddmovies, proxyTvApi, proxyTvAdd } = require("../controllers/ProxyApi");
+const updateUserProfile = require("../controllers/updateuser");
 const router = express.Router();
 
 
@@ -24,11 +25,47 @@ router.get("/dashboard", authenticateToken, dashboardController.dashboard);
 router.get("/getUsers", exampleController.getAllUsers);
 router.post("/getLatestMovies", movieList.getLatestMovies)
 router.post("/getAddedMovies", movieList.getAddedMovies)
+router.put('/profile/:userId', async (req, res) => {
+    const userId = req.params.userId;
+    const userData = req.body;
+
+    try {
+        // Ensure that the authenticated user is the same as the user being updated
+        // if (req.user.id !== userId) {
+        //     return res.status(403).json({ message: 'Unauthorized: You are not allowed to update this user profile' });
+        // }
+
+        // Update user profile
+        const updatedUser = await updateUserProfile(userId, userData);
+
+        if (!updatedUser) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Omit the password field from the response
+        const { password: _, ...userWithoutPassword } = updatedUser.toObject();
+
+        res.status(200).json({ message: 'User profile updated successfully', user: userWithoutPassword });
+    } catch (error) {
+        console.error('Error updating user profile:', error);
+        res.status(500).json({ message: error.message || 'Internal server error' });
+    }
+});
+
+
+
+
+
 router.get("/", (req, res) => {
     [
         res.json("App is working good to goo buddy ")
     ]
 })
+
+router.get('/userStatus', (req, res) => {
+    const userStatus = 'online';
+    res.json({ status: userStatus });
+});
 router.post("/imdb-image", imdbImageController.imdbImage);
 router.post("/googleSignin", authController.google)
 
