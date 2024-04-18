@@ -62,10 +62,10 @@ router.get("/", (req, res) => {
     ]
 })
 
-router.get('/userStatus', (req, res) => {
-    const userStatus = 'online';
-    res.json({ status: userStatus });
-});
+// router.get('/userStatus', (req, res) => {
+//     const userStatus = 'online';
+//     res.json({ status: userStatus });
+// });
 router.post("/imdb-image", imdbImageController.imdbImage);
 router.post("/googleSignin", authController.google)
 
