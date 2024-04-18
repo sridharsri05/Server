@@ -47,7 +47,9 @@ const config = require("./config.js");
 const routes = require("./routes/app.js");
 
 const app = express();
-const io = require("socket.io")(); // Integrate Socket.IO
+const server = http.createServer(app); // Create HTTP server
+
+const io = require("socket.io")(server); // Integrate Socket.IO with HTTP server
 
 app.use(express.json());
 const corsOptions = {
@@ -69,8 +71,8 @@ mongoose
         console.error("MongoDB connection error:", error);
     });
 
-// Integrate Socket.IO with Express app
-io.attach(app);
+// Use routes
+app.use("/", routes);
 
 // Socket.IO connection handling
 io.on("connection", (socket) => {
@@ -87,7 +89,4 @@ io.on("connection", (socket) => {
     });
 });
 
-// Use routes
-app.use("/", routes);
-
-module.exports = app;
+module.exports = { app, server };
