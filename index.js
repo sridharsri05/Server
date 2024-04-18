@@ -47,37 +47,15 @@ const config = require("./config.js");
 const routes = require("./routes/app.js");
 
 const app = express();
-const server = http.createServer(app); // Create HTTP server
-
-const io = require("socket.io")(server); // Integrate Socket.IO with HTTP server
+const io = require("socket.io")(); // Integrate Socket.IO
 
 app.use(express.json());
 const corsOptions = {
-    origin: ["https://movie-app-ruddy-nine.vercel.app","http://localhost:5173"],
+    origin: ["https://movie-app-ruddy-nine.vercel.app", "http://localhost:5173"],
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
     preflightContinue: false,
     optionsSuccessStatus: 204
 };
-
-// const corsOptions = {
-//     origin: function (origin, callback) {
-//         // Check if the origin is in the allowed origins list
-//         if (
-//             ["https://movie-app-ruddy-nine.vercel.app", "http://localhost:5173"].indexOf(origin) !== -1 ||
-//             !origin
-//         ) {
-//             // Allow the request
-//             callback(null, true);
-//         } else {
-//             // Reject the request
-//             callback(new Error("Not allowed by CORS"));
-//         }
-//     },
-//     methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE", "OPTIONS"],
-//     preflightContinue: false,
-//     optionsSuccessStatus: 204
-// };
-
 
 app.use(cors(corsOptions));
 
@@ -90,6 +68,11 @@ mongoose
     .catch((error) => {
         console.error("MongoDB connection error:", error);
     });
+
+// Integrate Socket.IO with Express app
+io.attach(app);
+
+// Socket.IO connection handling
 io.on("connection", (socket) => {
     console.log("A user connected");
 
@@ -107,18 +90,4 @@ io.on("connection", (socket) => {
 // Use routes
 app.use("/", routes);
 
-let serverInstance = null;
-
-if (process.env.NODE_ENV !== "production") {
-    // Development environment
-    serverInstance = app.listen(3001, () => {
-        console.log("Server is running on port 3001");
-    });
-} else {
-    // Production environment
-    serverInstance = server.listen(() => {
-        console.log("Server is running");
-    });
-}
-
-module.exports = { app, serverInstance };
+module.exports = app;
