@@ -53,11 +53,31 @@ const io = require("socket.io")(server); // Integrate Socket.IO with HTTP server
 
 app.use(express.json());
 const corsOptions = {
-    origin: "https://movie-app-ruddy-nine.vercel.app",
+    origin: ["https://movie-app-ruddy-nine.vercel.app","http://localhost:5173"],
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
     preflightContinue: false,
     optionsSuccessStatus: 204
 };
+
+// const corsOptions = {
+//     origin: function (origin, callback) {
+//         // Check if the origin is in the allowed origins list
+//         if (
+//             ["https://movie-app-ruddy-nine.vercel.app", "http://localhost:5173"].indexOf(origin) !== -1 ||
+//             !origin
+//         ) {
+//             // Allow the request
+//             callback(null, true);
+//         } else {
+//             // Reject the request
+//             callback(new Error("Not allowed by CORS"));
+//         }
+//     },
+//     methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE", "OPTIONS"],
+//     preflightContinue: false,
+//     optionsSuccessStatus: 204
+// };
+
 
 app.use(cors(corsOptions));
 
