@@ -10,6 +10,7 @@ const movieList = require("../controllers/getLatestmovies");
 const { proxyApi, apiProxy, proxyAddmovies, proxyTvApi, proxyTvAdd } = require("../controllers/ProxyApi");
 const updateUserProfile = require("../controllers/updateuser");
 const jwtUtils = require("../utils/jwtUtils");
+const User = require("../models/User");
 const router = express.Router();
 
 
@@ -60,7 +61,24 @@ router.put('/profile/:userId', async (req, res) => {
     }
 });
 
+router.delete("/deleteUser/:userId", async (req, res) => {
+    const userId = req.params.userId;
+    const userData = req.body;
 
+    try {
+        // Ensure that the authenticated user is the same as the user being updated
+        // if (req.user.id !== userId) {
+        //     return res.status(403).json({ message: 'Unauthorized: You are not allowed to update this user profile' });
+        // }
+        await User.findByIdAndDelete(userId);
+        res.status(200).json({ message: 'User account has been deleted successfully.....' });
+    } catch (error) {
+        console.error('Error deleting user profile:', error);
+        res.status(500).json({ message: error.message || 'Internal server error' });
+    }
+
+
+})
 
 
 
