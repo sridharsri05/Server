@@ -9,6 +9,7 @@ const imdbImageController = require("../controllers/imdbImage")
 const movieList = require("../controllers/getLatestmovies");
 const { proxyApi, apiProxy, proxyAddmovies, proxyTvApi, proxyTvAdd } = require("../controllers/ProxyApi");
 const updateUserProfile = require("../controllers/updateuser");
+const jwtUtils = require("../utils/jwtUtils");
 const router = express.Router();
 
 
@@ -41,11 +42,18 @@ router.put('/profile/:userId', async (req, res) => {
         if (!updatedUser) {
             return res.status(404).json({ message: 'User not found' });
         }
+        const token = jwtUtils.generateToken({
+            _id: updatedUser._id,
+            username: updatedUser.username,
+            email: updatedUser.email,
+            role: updatedUser.role,
+            profilePicture: updatedUser.profilePicture,
 
+        });
         // Omit the password field from the response
         const { password: _, ...userWithoutPassword } = updatedUser.toObject();
 
-        res.status(200).json({ message: 'User profile updated successfully', user: userWithoutPassword });
+        res.status(200).json({ message: 'User profile updated successfully', user: userWithoutPassword, token });
     } catch (error) {
         console.error('Error updating user profile:', error);
         res.status(500).json({ message: error.message || 'Internal server error' });
