@@ -18,17 +18,17 @@ const proxyApi = async (req, res) => {
         res.json(response.data);
     } catch (error) {
         console.error({ error });
-        res.status(500).json({ error: 'Internal server error', error });
+        res.status(500).json({ error: 'proxy movie server error', error });
     }
 }
-const proxyAddmovies = async (req, res) => {
+const proxyAddMovies = async (req, res) => {
     try {
         const { page } = req.params;
         const response = await axios.get(`${backendApiUrl}/vapi/movie/add/${page}`);
         res.json(response.data);
     } catch (error) {
         console.error({ error });
-        res.status(500).json({ error: 'Internal server error', error });
+        res.status(500).json({ error: 'proxy addMovie server error', error });
     }
 }
 const proxyTvApi = async (req, res) => {
@@ -38,7 +38,7 @@ const proxyTvApi = async (req, res) => {
         res.json(response.data);
     } catch (error) {
         console.error({ error });
-        res.status(500).json({ error: 'Internal server error', error });
+        res.status(500).json({ error: ' proxyTv server error', error });
     }
 }
 const proxyTvAdd = async (req, res) => {
@@ -48,11 +48,11 @@ const proxyTvAdd = async (req, res) => {
         res.json(response.data);
     } catch (error) {
         console.error({ error });
-        res.status(500).json({ error: 'Internal server error', error });
+        res.status(500).json({ error: 'proxyTv server error', error });
     }
 }
 
 
-module.exports = { apiProxy, proxyApi, proxyAddmovies, proxyTvAdd, proxyTvApi }
+module.exports = { apiProxy, proxyApi, proxyAddMovies, proxyTvAdd, proxyTvApi }
 
 
