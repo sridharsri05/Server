@@ -2,9 +2,9 @@ const axios = require('axios');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
 
-const backendApiUrl = "https://vidsrc.to/";
+const backendApiUrl = "https://vidsrc.to";
 const apiProxy = createProxyMiddleware('/api', {
-    target: 'https://vidsrc.to/',
+    target: 'https://vidsrc.to',
     changeOrigin: true,
     pathRewrite: {
         '^/api': '', // Remove the '/api' prefix when forwarding the request
