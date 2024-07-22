@@ -100,7 +100,7 @@ router.post("/googleSignin", authController.google)
 router.get('/api/vapi/movie/new/:page', proxyApi);
 // router.get('/api/vapi/movie/add/:page', proxyAddMovies);
 router.get('/api/vapi/tv/new/:page', proxyTvApi);
-// router.get('/api/vapi/tv/add/:page', proxyTvAdd);
+router.get('/api/vapi/tv/add/:page', proxyTvAdd);
 
 
 module.exports = router;
