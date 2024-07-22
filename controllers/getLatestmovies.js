@@ -90,4 +90,4 @@ const getAddedTvshows = async (req, res) => {
     }
 };
 
-module.exports = { getLatestMovies, getAddedMovies ,getAddedTvshows};
+module.exports = { getLatestMovies, getAddedMovies, getAddedTvshows };

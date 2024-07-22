@@ -27,6 +27,7 @@ router.get("/dashboard", authenticateToken, dashboardController.dashboard);
 router.get("/getUsers", exampleController.getAllUsers);
 router.post("/getLatestMovies", movieList.getLatestMovies)
 router.post("/getAddedMovies", movieList.getAddedMovies)
+router.post("/getAddedTVShows", movieList.getAddedTvshows)
 router.put('/profile/:userId', async (req, res) => {
     const userId = req.params.userId;
     const userData = req.body;
