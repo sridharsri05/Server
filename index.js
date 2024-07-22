@@ -3,7 +3,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 
-// const serverless = require("serverless-http");
+
 const config = require("./config.js");
 const routes = require("./routes/app.js");
 

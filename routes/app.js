@@ -7,7 +7,7 @@ const authenticateToken = require("../middleware/authenticateToken");
 const exampleController = require("../controllers/exampleController");
 const imdbImageController = require("../controllers/imdbImage")
 const movieList = require("../controllers/getLatestmovies");
-const { proxyApi, apiProxy, proxyAddMovies, proxyTvApi, proxyTvAdd } = require("../controllers/ProxyApi");
+const { proxyApi, proxyAddMovies, proxyTvApi, proxyTvAdd } = require("../controllers/ProxyApi");
 const updateUserProfile = require("../controllers/updateuser");
 const jwtUtils = require("../utils/jwtUtils");
 const User = require("../models/User");
@@ -88,17 +88,18 @@ router.get("/", (req, res) => {
     ]
 })
 
-// router.get('/userStatus', (req, res) => {
-//     const userStatus = 'online';
-//     res.json({ status: userStatus });
-// });
+
 router.post("/imdb-image", imdbImageController.imdbImage);
 router.post("/googleSignin", authController.google)
 
-router.get('/api/vapi/movie/new/:page', proxyApi, apiProxy);
-router.get('/api/vapi/movie/add/:page', proxyAddMovies, apiProxy);
-router.get('/api/vapi/tv/new/:page', proxyTvApi, apiProxy);
-router.get('/api/vapi/tv/add/:page', proxyTvAdd, apiProxy);
+// router.get('/api/vapi/movie/new/:page', proxyApi, apiProxy);
+// router.get('/api/vapi/movie/add/:page', proxyAddMovies, apiProxy);
+// router.get('/api/vapi/tv/new/:page', proxyTvApi, apiProxy);
+// router.get('/api/vapi/tv/add/:page', proxyTvAdd, apiProxy);
+router.get('/api/vapi/movie/new/:page', proxyApi);
+// router.get('/api/vapi/movie/add/:page', proxyAddMovies);
+router.get('/api/vapi/tv/new/:page', proxyTvApi);
+// router.get('/api/vapi/tv/add/:page', proxyTvAdd);
 
 
 module.exports = router;
