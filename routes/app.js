@@ -99,21 +99,32 @@ router.post("/googleSignin", authController.google)
 // router.get('/api/vapi/tv/new/:page', proxyTvApi, apiProxy);
 // router.get('/api/vapi/tv/add/:page', proxyTvAdd, apiProxy);
 
-const backendApiUrl = "https://vidsrc.cc";
+const backendApiUrl = "https://vidsrc.xyz";
+const SCRAPER_API_KEY = '96eb9ccd26e2a5a8fd37f36e4fe107d7'; // Replace with your ScraperAPI key
+
 const ApiSync = async (req, res) => {
     try {
         const { page } = req.params;
-        const response = await axios.get(`${backendApiUrl}/tvshows/latest/page-${page}.json`, {
+
+        // The ScraperAPI URL with the original URL as a query parameter
+        const response = await axios.get(`http://api.scraperapi.com`, {
+            params: {
+                api_key: SCRAPER_API_KEY,
+                url: `${backendApiUrl}/tvshows/latest/page-${page}.json`
+            },
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
             }
         });
+
         res.json(response.data);
     } catch (error) {
         console.error({ error });
         res.status(500).json({ error: 'proxyTv server error', error });
     }
-}
+};
+
+
 router.get('/api/vapi/movie/new/:page', proxyApi);
 router.get('/api/vapi/tv/new/:page', proxyTvApi);
 router.get('/api/vapi/tv/add/:page', proxyTvAdd);
