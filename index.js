@@ -2,7 +2,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-
+const path = require("path")
 
 const config = require("./config.js");
 const routes = require("./routes/app.js");
@@ -13,12 +13,12 @@ app.use(express.json());
 const corsOptions = {
     origin: "https://movie-app-ruddy-nine.vercel.app",
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
-    preflightContinue: false,
+    preflightContinue: true,
     optionsSuccessStatus: 204
 };
 
 app.use(cors(corsOptions));
-
+app.use(express.static(path.join(__dirname, "public")));
 
 // Connect to MongoDB
 mongoose
