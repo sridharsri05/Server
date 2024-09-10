@@ -3,33 +3,28 @@ const { createProxyMiddleware } = require('http-proxy-middleware');
 
 
 const backendApiUrl = "https://vidsrc.xyz";
-// const apiProxy = createProxyMiddleware('/api', {
-//     target: backendApiUrl,
-//     changeOrigin: true,
-//     pathRewrite: {
-//         '^/api': '', // Remove the '/api' prefix when forwarding the request
-//     },
-//     logLevel: 'debug', // Enable detailed logging for debugging
-//     onProxyReq: (proxyReq, req, res) => {
-//         console.log(`Proxying request to: ${proxyReq.path}`);
-//     },
-//     onError: (err, req, res) => {
-//         console.error('Proxy error:', err);
-//         res.status(500).json({ error: 'Proxy error', details: err.message });
-//     }
-// });
+const SCRAPER_API_KEY = '96eb9ccd26e2a5a8fd37f36e4fe107d7'
+
 
 const proxyApi = async (req, res) => {
     try {
         const { page } = req.params;
-        const response = await axios.get(`${backendApiUrl}/movies/latest/page-${page}.json`);
-        res.json(response.data);
 
+        // The ScraperAPI URL with the original URL as a query parameter
+        const response = await axios.get('http://api.scraperapi.com', {
+            params: {
+                api_key: SCRAPER_API_KEY,
+                url: `${backendApiUrl}/movies/latest/page-${page}.json`
+            }
+        });
+
+        res.json(response.data);
     } catch (error) {
         console.error({ error });
         res.status(500).json({ error: 'proxy movie server error', error });
     }
-}
+};
+
 const proxyAddMovies = async (req, res) => {
     try {
         const { page } = req.params;
@@ -53,13 +48,24 @@ const proxyTvApi = async (req, res) => {
 const proxyTvAdd = async (req, res) => {
     try {
         const { page } = req.params;
-        const response = await axios.get(`${backendApiUrl}/tvshows/latest/page-${page}.json`);
+
+        // The ScraperAPI URL with the original URL as a query parameter
+        const response = await axios.get('http://api.scraperapi.com', {
+            params: {
+                api_key: SCRAPER_API_KEY,
+                url: `${backendApiUrl}/tvshows/latest/page-${page}.json`
+            },
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+        });
+
         res.json(response.data);
     } catch (error) {
         console.error({ error });
         res.status(500).json({ error: 'proxyTv server error', error });
     }
-}
+};
 
 
 // module.exports = { apiProxy, proxyApi, proxyAddMovies, proxyTvAdd, proxyTvApi }

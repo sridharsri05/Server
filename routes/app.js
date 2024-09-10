@@ -100,7 +100,7 @@ router.post("/googleSignin", authController.google)
 // router.get('/api/vapi/tv/add/:page', proxyTvAdd, apiProxy);
 
 const backendApiUrl = "https://vidsrc.xyz";
-const SCRAPER_API_KEY = '96eb9ccd26e2a5a8fd37f36e4fe107d7'; // Replace with your ScraperAPI key
+; // Replace with your ScraperAPI key
 
 const ApiSync = async (req, res) => {
     try {
@@ -125,6 +125,6 @@ const ApiSync = async (req, res) => {
 router.get('/api/vapi/movie/new/:page', proxyApi);
 router.get('/api/vapi/tv/new/:page', proxyTvApi);
 router.get('/api/vapi/tv/add/:page', proxyTvAdd);
-router.get('/api/vapi/tv/ee/:page', ApiSync)
+
 
 module.exports = router;
