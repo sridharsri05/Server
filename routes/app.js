@@ -97,8 +97,8 @@ router.post("/googleSignin", authController.google)
 // router.get('/api/vapi/movie/add/:page', proxyAddMovies, apiProxy);
 // router.get('/api/vapi/tv/new/:page', proxyTvApi, apiProxy);
 // router.get('/api/vapi/tv/add/:page', proxyTvAdd, apiProxy);
+
 router.get('/api/vapi/movie/new/:page', proxyApi);
-// router.get('/api/vapi/movie/add/:page', proxyAddMovies);
 router.get('/api/vapi/tv/new/:page', proxyTvApi);
 router.get('/api/vapi/tv/add/:page', proxyTvAdd);
 

@@ -2,7 +2,7 @@ const axios = require('axios');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
 
-const backendApiUrl = "https://vidsrc.net";
+const backendApiUrl = "https://vidsrc.xyz";
 // const apiProxy = createProxyMiddleware('/api', {
 //     target: backendApiUrl,
 //     changeOrigin: true,
