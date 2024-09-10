@@ -99,7 +99,7 @@ router.post("/googleSignin", authController.google)
 // router.get('/api/vapi/tv/new/:page', proxyTvApi, apiProxy);
 // router.get('/api/vapi/tv/add/:page', proxyTvAdd, apiProxy);
 
-const backendApiUrl = "https://vidsrc.xyz";
+const backendApiUrl = "https://vidsrc.cc";
 const ApiSync = async (req, res) => {
     try {
         const { page } = req.params;
