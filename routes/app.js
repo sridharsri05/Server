@@ -111,9 +111,6 @@ const ApiSync = async (req, res) => {
             params: {
                 api_key: SCRAPER_API_KEY,
                 url: `${backendApiUrl}/tvshows/latest/page-${page}.json`
-            },
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
             }
         });
 
