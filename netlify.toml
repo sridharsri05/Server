@@ -1,7 +1,0 @@
-[build]
-  functions = "."
-
-[[redirects]]
-  from = "/api/*"
-  to = "/index.js"
-  status = 200
