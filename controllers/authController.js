@@ -3,6 +3,9 @@
 const bcrypt = require("bcrypt");
 const User = require("../models/User.js");
 const jwtUtils = require("../utils/jwtUtils.js");
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
+const config = require("../config")
 
 const login = async function (req, res) {
     try {
@@ -24,7 +27,7 @@ const login = async function (req, res) {
             username: user.username,
             email: user.email,
             role: user.role,
-            profilePicture:user.profilePicture,
+            profilePicture: user.profilePicture,
         });
 
         res.json({
@@ -36,7 +39,7 @@ const login = async function (req, res) {
                 username: user.username,
                 email: user.email,
                 role: user.role,
-                profilePicture:user.profilePicture,
+                profilePicture: user.profilePicture,
             },
         });
     } catch (error) {
@@ -51,11 +54,11 @@ const google = async (req, res) => {
         if (user) {
             // If the user exists, generate a token for the user
             const token = jwtUtils.generateToken({
-            _id: user._id,
-            username: user.username,
-            email: user.email,
-            role: user.role,
-            profilePicture:user.profilePicture,
+                _id: user._id,
+                username: user.username,
+                email: user.email,
+                role: user.role,
+                profilePicture: user.profilePicture,
             });
 
             // Since the user exists, you probably want to return some user information
@@ -80,7 +83,7 @@ const google = async (req, res) => {
                 email: email,
                 password: hashedPassword,
                 profilePicture: photo,
-                role:'user',
+                role: 'user',
             });
 
             // Save the new user to the database
@@ -88,13 +91,13 @@ const google = async (req, res) => {
 
             // Generate a token for the new user
             const token = jwtUtils.generateToken(
-                { 
-                    _id: newUser._id , 
+                {
+                    _id: newUser._id,
                     username: newUser.username,
                     email: newUser.email,
                     role: newUser.role,
-                    profilePicture:newUser.profilePicture,
-                
+                    profilePicture: newUser.profilePicture,
+
                 });
 
             // Return the token and the user information (excluding password)
@@ -123,7 +126,7 @@ const signup = async function (req, res) {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-       
+
         const newUser = new User({
             username,
             email,
@@ -140,8 +143,86 @@ const signup = async function (req, res) {
     }
 };
 
+
+
+
+
+const forgotPassword = async (req, res) => {
+    const { email } = req.body;
+    try {
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Generate reset token
+        const token = crypto.randomBytes(32).toString('hex');
+        user.resetToken = token;
+        user.resetTokenExpiration = Date.now() + 3600000; // Token valid for 1 hour
+        await user.save();
+
+        // Send email with reset link
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: config.EMAIL_USER,
+                pass: config.EMAIL_PASSWORD,
+            },
+        });
+        const baseUrl = config.VERCEL_URL && config.VERCEL_URL.trim() !== ""
+            ? `https://${config.VERCEL_URL}`
+            : 'http://localhost:3000';
+
+        const resetUrl = `${baseUrl}/reset-password/${token}`;
+        const mailOptions = {
+            to: email,
+            from: 'noreplay_movienexus@gmail.com',
+            subject: 'Password Reset',
+            html: `<p>You requested a password reset</p>
+             <p>Click this <a href="${resetUrl}">link</a> to reset your password.</p>`,
+        };
+
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+                return res.status(500).json({ message: 'Error sending email' });
+            }
+            res.json({ message: 'Reset link sent to your email' });
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+const resetPassword = async (req, res) => {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    try {
+        const user = await User.findOne({
+            resetToken: token,
+            resetTokenExpiration: { $gt: Date.now() },
+        });
+        if (!user) {
+            return res.status(400).json({ message: 'Invalid or expired token' });
+        }
+
+        // Hash the new password
+        const hashedPassword = await bcrypt.hash(password, 12);
+        user.password = hashedPassword;
+        user.resetToken = undefined;
+        user.resetTokenExpiration = undefined;
+        await user.save();
+
+        res.json({ message: 'Password reset successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
 module.exports = {
     login,
     signup,
-    google
+    google,
+    resetPassword,
+    forgotPassword
 };

@@ -91,8 +91,13 @@ router.get("/", (req, res) => {
 })
 
 
+
 router.post("/imdb-image", imdbImageController.imdbImage);
 router.post("/googleSignin", authController.google)
+router.post("/forgot-password",authController.forgotPassword)
+router.post("/reset-password/:token",authController.resetPassword)
+
+
 
 // router.get('/api/vapi/movie/new/:page', proxyApi, apiProxy);
 // router.get('/api/vapi/movie/add/:page', proxyAddMovies, apiProxy);
