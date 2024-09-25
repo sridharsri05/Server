@@ -145,54 +145,6 @@ const signup = async function (req, res) {
 
 
 
-
-
-// const forgotPassword = async (req, res) => {
-//     const { email } = req.body;
-//     try {
-//         const user = await User.findOne({ email });
-//         if (!user) {
-//             return res.status(404).json({ message: 'User not found' });
-//         }
-
-//         // Generate reset token
-//         const token = crypto.randomBytes(32).toString('hex');
-//         user.resetToken = token;
-//         user.resetTokenExpiration = Date.now() + 3600000; // Token valid for 1 hour
-//         await user.save();
-
-//         // Send email with reset link
-//         const transporter = nodemailer.createTransport({
-//             service: 'gmail',
-//             auth: {
-//                 user: config.EMAIL_USER,
-//                 pass: config.EMAIL_PASSWORD,
-//             },
-//         });
-//         const baseUrl = config.VERCEL_URL && config.VERCEL_URL.trim() !== ""
-//             ? `https://${config.VERCEL_URL}`
-//             : 'http://localhost:3000';
-
-//         const resetUrl = `${baseUrl}/reset-password/${token}`;
-//         const mailOptions = {
-//             to: email,
-//             from: 'noreplay_movienexus@gmail.com',
-//             subject: 'Password Reset',
-//             html: `<p>You requested a password reset</p>
-//              <p>Click this <a href="${resetUrl}">link</a> to reset your password.</p>`,
-//         };
-
-//         transporter.sendMail(mailOptions, (error, info) => {
-//             if (error) {
-//                 return res.status(500).json({ message: 'Error sending email' });
-//             }
-//             res.json({ message: 'Reset link sent to your email' });
-//         });
-//     } catch (error) {
-//         res.status(500).json({ message: 'Server error' });
-//     }
-// };
-
 const forgotPassword = async (req, res) => {
     const { email } = req.body;
 
@@ -256,32 +208,7 @@ const forgotPassword = async (req, res) => {
         });
     }
 };
-
-// const resetPassword = async (req, res) => {
-//     const { token } = req.params;
-//     const { password } = req.body;
-
-//     try {
-//         const user = await User.findOne({
-//             resetToken: token,
-//             resetTokenExpiration: { $gt: Date.now() },
-//         });
-//         if (!user) {
-//             return res.status(400).json({ message: 'Invalid or expired token' });
-//         }
-
-//         // Hash the new password
-//         const hashedPassword = await bcrypt.hash(password, 12);
-//         user.password = hashedPassword;
-//         user.resetToken = undefined;
-//         user.resetTokenExpiration = undefined;
-//         await user.save();
-
-//         res.json({ message: 'Password reset successfully' });
-//     } catch (error) {
-//         res.status(500).json({ message: 'Server error' });
-//     }
-// };
+ 
 
 
 const resetPassword = async (req, res) => {
