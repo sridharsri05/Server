@@ -14,8 +14,6 @@ const User = require("../models/User");
 const { default: axios } = require("axios");
 const router = express.Router();
 
-
-
 const config = require('../config')
 
 

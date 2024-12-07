@@ -1,9 +1,9 @@
 const axios = require('axios');
 const { createProxyMiddleware } = require('http-proxy-middleware');
-
+const config = require('../config')
 
 const backendApiUrl = "https://vidsrc.xyz";
-const SCRAPER_API_KEY = '96eb9ccd26e2a5a8fd37f36e4fe107d7'
+
 
 
 const proxyApi = async (req, res) => {
@@ -13,7 +13,7 @@ const proxyApi = async (req, res) => {
         // The ScraperAPI URL with the original URL as a query parameter
         const response = await axios.get('http://api.scraperapi.com', {
             params: {
-                api_key: SCRAPER_API_KEY,
+                api_key: config.SCRAPER_API_KEY,
                 url: `${backendApiUrl}/movies/latest/page-${page}.json`
             }
         });
@@ -52,7 +52,7 @@ const proxyTvAdd = async (req, res) => {
         // The ScraperAPI URL with the original URL as a query parameter
         const response = await axios.get('http://api.scraperapi.com', {
             params: {
-                api_key: SCRAPER_API_KEY,
+                api_key: config.SCRAPER_API_KEY,
                 url: `${backendApiUrl}/tvshows/latest/page-${page}.json`
             },
             headers: {
