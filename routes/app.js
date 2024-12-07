@@ -16,7 +16,7 @@ const router = express.Router();
 
 
 
-
+const config = require('../config')
 
 
 // Auth Routes
@@ -94,8 +94,8 @@ router.get("/", (req, res) => {
 
 router.post("/imdb-image", imdbImageController.imdbImage);
 router.post("/googleSignin", authController.google)
-router.post("/forgot-password",authController.forgotPassword)
-router.post("/reset-password/:token",authController.resetPassword)
+router.post("/forgot-password", authController.forgotPassword)
+router.post("/reset-password/:token", authController.resetPassword)
 
 
 
@@ -105,7 +105,6 @@ router.post("/reset-password/:token",authController.resetPassword)
 // router.get('/api/vapi/tv/add/:page', proxyTvAdd, apiProxy);
 
 const backendApiUrl = "https://vidsrc.xyz";
-; // Replace with your ScraperAPI key
 
 const ApiSync = async (req, res) => {
     try {
@@ -114,7 +113,7 @@ const ApiSync = async (req, res) => {
         // The ScraperAPI URL with the original URL as a query parameter
         const response = await axios.get(`http://api.scraperapi.com`, {
             params: {
-                api_key: SCRAPER_API_KEY,
+                api_key:config.SCRAPER_API_KEY,
                 url: `${backendApiUrl}/tvshows/latest/page-${page}.json`
             }
         });
