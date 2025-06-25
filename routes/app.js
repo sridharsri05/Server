@@ -95,38 +95,12 @@ router.post("/googleSignin", authController.google)
 router.post("/forgot-password", authController.forgotPassword)
 router.post("/reset-password/:token", authController.resetPassword)
 
-
-
-// router.get('/api/vapi/movie/new/:page', proxyApi, apiProxy);
-// router.get('/api/vapi/movie/add/:page', proxyAddMovies, apiProxy);
-// router.get('/api/vapi/tv/new/:page', proxyTvApi, apiProxy);
-// router.get('/api/vapi/tv/add/:page', proxyTvAdd, apiProxy);
-
-const backendApiUrl = "https://vidsrc.xyz";
-
-const ApiSync = async (req, res) => {
-    try {
-        const { page } = req.params;
-
-        // The ScraperAPI URL with the original URL as a query parameter
-        const response = await axios.get(`http://api.scraperapi.com`, {
-            params: {
-                api_key:config.SCRAPER_API_KEY,
-                url: `${backendApiUrl}/tvshows/latest/page-${page}.json`
-            }
-        });
-
-        res.json(response.data);
-    } catch (error) {
-        console.error({ error });
-        res.status(500).json({ error: 'proxyTv server error', error });
-    }
-};
-
-
+// -----> Proxy Routes for VAPI <-----
 router.get('/api/vapi/movie/new/:page', proxyApi);
-router.get('/api/vapi/tv/new/:page', proxyTvApi);
 router.get('/api/vapi/tv/add/:page', proxyTvAdd);
 
+
+// note this route not working
+router.get('/api/vapi/tv/new/:page', proxyTvApi);
 
 module.exports = router;

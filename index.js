@@ -10,6 +10,8 @@ const routes = require("./routes/app.js");
 const app = express();
 
 app.use(express.json());
+
+
 const allowedOrigins = [
     "http://localhost:5173", // For development
     "https://movienexus-ruddy-nine.vercel.app", // For production
@@ -41,11 +43,14 @@ mongoose
     .catch((error) => {
         console.error("MongoDB connection error:", error);
     });
+
+
 // const port = 3001;
 // app.listen(port, () => {
 //     console.log(`Server is running on port ${port}`);
 // });
-// // Use routes
+
+// Use routes
 app.use("/", routes);
 
 // Custom 404 Handler for Unknown Routes
