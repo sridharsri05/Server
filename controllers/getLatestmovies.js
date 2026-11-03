@@ -18,15 +18,20 @@ const getLatestMovies = async (req, res) => {
             if (movieDetails.Poster === "N/A") {
                 // Call imdbImage function to fetch image URL from IMDb
                 const imdbImageResponse = await imdbImage(imdbId); // Pass imdbId directly
-                movieDetails.Poster = imdbImageResponse.imageUrl;
+                if (imdbImageResponse.imageUrl && imdbImageResponse.status === "success") {
+                    movieDetails.Poster = imdbImageResponse.imageUrl
+                } else {
+                    movieDetails.Poster = null;
+                }
             }
-
+           
             return movieDetails;
         });
 
         const movieDetails = await Promise.all(movieDetailsPromises);
 
-        res.json(movieDetails).status(200);
+
+        res.status(200).json(movieDetails);
         console.log(movieDetails, "Movie");
     } catch (error) {
         console.error("Error fetching movie details:", error);

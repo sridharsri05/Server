@@ -28,10 +28,15 @@ const corsOptions = {
         }
     },
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
+    credentials: true,
     preflightContinue: false,
     optionsSuccessStatus: 204,
 };
 app.use(cors(corsOptions));
+
+// Explicitly handle all OPTIONS preflight requests
+app.options("*", cors(corsOptions));
+
 app.use(express.static(path.join(__dirname, "public")));
 
 // Connect to MongoDB
@@ -83,4 +88,3 @@ app.use((err, req, res, next) => {
 })
 
 module.exports = app;
-
