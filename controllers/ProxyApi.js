@@ -1,127 +1,97 @@
 const axios = require('axios');
-const { createProxyMiddleware } = require('http-proxy-middleware');
-const config = require('../config')
+const config = require('../config');
 
-const backendApiUrl = "https://vidsrc.xyz";
+/**
+ * Try fetching a path from the primary domain first, then fallbacks.
+ * Returns the first successful response.
+ */
+async function fetchWithFallback(pathFn, options = {}) {
+    const domains = [config.VIDSRC_DOMAIN, ...config.VIDSRC_FALLBACKS];
+    const errors = [];
 
+    for (const domain of domains) {
+        const url = pathFn(domain);
+        try {
+            const response = await axios.get(url, { timeout: 5000, ...options });
+            if (response.data) {
+                console.log(`✅ Success from: ${domain}`);
+                return response;
+            }
+        } catch (err) {
+            console.warn(`⚠️ Failed from ${domain}: ${err.message}`);
+            errors.push({ domain, message: err.message });
+        }
+    }
 
-//*/// Proxy middleware to forward requests to the backend API
-// const proxyApi = async (req, res) => {
-//     try {
-//         const { page } = req.params;
-
-//         // The ScraperAPI URL with the original URL as a query parameter
-//         // const response = await axios.get('http://api.scraperapi.com', {
-//         //     params: {
-//         //         api_key: config.SCRAPER_API_KEY,
-//         //         url: `${backendApiUrl}/movies/latest/page-${page}.json`
-//         //     }
-//         // });
-//         const response = await axios.get(`${backendApiUrl}/movies/latest/page-${page}.json`)
-//         res.json(response.data);
-//     } catch (error) {
-//         console.error({ error });
-//         res.status(500).json({ error: 'proxy movie server error', error });
-//     }
-// };
-
+    throw new Error(`All domains failed: ${JSON.stringify(errors)}`);
+}
 
 const proxyApi = async (req, res) => {
     const { page } = req.params;
 
-    const directUrl = `${backendApiUrl}/movies/latest/page-${page}.json`;
-    const scraperUrl = `http://api.scraperapi.com?api_key=${config.SCRAPER_API_KEY}&url=${encodeURIComponent(directUrl)}&render=false&cache=true`;
-
-    const directRequest = axios.get(directUrl, { timeout: 7000 });
-    const scraperRequest = axios.get(scraperUrl, { timeout: 10000 });
-
     try {
-        const result = await Promise.any([directRequest, scraperRequest]);
+        const result = await fetchWithFallback(
+            (domain) => `${domain}/movies/latest/page-${page}.json`
+        );
         res.json(result.data);
     } catch (err) {
-        console.error("❌ Both requests failed:", err.errors || err);
+        console.error("❌ All sources failed for movies:", err.message);
         res.status(500).json({
             error: 'proxy movie server error',
-            messages: err.errors?.map(e => e.message) || [err.message],
+            messages: [err.message],
         });
     }
 };
 
 const proxyAddMovies = async (req, res) => {
+    const { page } = req.params;
+
     try {
-        const { page } = req.params;
-        const response = await axios.get(`${backendApiUrl}/vapi/movie/add/${page}`);
-        res.json(response.data);
-    } catch (error) {
-        console.error({ error });
-        res.status(500).json({ error: 'proxy addMovie server error', error });
+        const result = await fetchWithFallback(
+            (domain) => `${domain}/vapi/movie/add/${page}`
+        );
+        res.json(result.data);
+    } catch (err) {
+        console.error("❌ All sources failed for addMovies:", err.message);
+        res.status(500).json({ error: 'proxy addMovie server error', message: err.message });
     }
-}
+};
+
 const proxyTvApi = async (req, res) => {
+    const { page } = req.params;
+
     try {
-        const { page } = req.params;
-        const response = await axios.get(`${backendApiUrl}/vapi/tv/new/${page}`);
-        res.json(response.data);
-    } catch (error) {
-        console.error({ error });
-        res.status(500).json({ error: ' proxyTv server error', error });
+        const result = await fetchWithFallback(
+            (domain) => `${domain}/vapi/tv/new/${page}`
+        );
+        res.json(result.data);
+    } catch (err) {
+        console.error("❌ All sources failed for TV:", err.message);
+        res.status(500).json({ error: 'proxyTv server error', message: err.message });
     }
-}
-
-
-// const proxyTvAdd = async (req, res) => {
-//     try {
-//         const { page } = req.params;
-
-//         // // The ScraperAPI URL with the original URL as a query parameter
-//         // const response = await axios.get('http://api.scraperapi.com', {
-//         //     params: {
-//         //         api_key: config.SCRAPER_API_KEY,
-//         //         url: `${backendApiUrl}/tvshows/latest/page-${page}.json`
-//         //     },
-//         //     headers: {
-//         //         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-//         //     }
-//         // });
-
-//         const response = await axios.get(`${backendApiUrl}/tvshows/latest/page-${page}.json`)
-//         res.json(response.data);
-//     } catch (error) {
-//         console.error({ error });
-//         res.status(500).json({ error: 'proxyTvAdd server error', error });
-//     }
-// };
-
+};
 
 const proxyTvAdd = async (req, res) => {
     const { page } = req.params;
 
-    const directUrl = `${backendApiUrl}/tvshows/latest/page-${page}.json`;
-    const scraperUrl = `http://api.scraperapi.com?api_key=${config.SCRAPER_API_KEY}&url=${encodeURIComponent(directUrl)}&render=false&cache=true`;
-
-    const directRequest = axios.get(directUrl, { timeout: 7000 });
-    const scraperRequest = axios.get(scraperUrl, {
-        timeout: 10000,
-        headers: {
-            'User-Agent':
-                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        },
-    });
-
     try {
-        const result = await Promise.any([directRequest, scraperRequest]);
+        const result = await fetchWithFallback(
+            (domain) => `${domain}/tvshows/latest/page-${page}.json`,
+            {
+                headers: {
+                    'User-Agent':
+                        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                },
+            }
+        );
         res.json(result.data);
     } catch (err) {
-        console.error("❌ Both requests failed in proxyTvAdd:", err.errors || err);
+        console.error("❌ All sources failed for proxyTvAdd:", err.message);
         res.status(500).json({
             error: 'proxyTvAdd server error',
-            messages: err.errors?.map(e => e.message) || [err.message],
+            message: err.message,
         });
     }
 };
 
-
-// module.exports = { apiProxy, proxyApi, proxyAddMovies, proxyTvAdd, proxyTvApi }
-module.exports = { proxyApi, proxyAddMovies, proxyTvAdd, proxyTvApi }
-
-
+module.exports = { proxyApi, proxyAddMovies, proxyTvAdd, proxyTvApi };

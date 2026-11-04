@@ -2,7 +2,9 @@
 const jwtUtils = require("../utils/jwtUtils");
 
 function authenticateToken(req, res, next) {
-    const token = req.headers.authorization;
+    // Accept both the raw token (what the app has always sent) and "Bearer <token>".
+    const raw = req.headers.authorization;
+    const token = raw && raw.replace(/^Bearer\s+/i, "");
 
     if (!token) {
         return res.status(401).json({ error: "Unauthorized",message:"token is not present" });

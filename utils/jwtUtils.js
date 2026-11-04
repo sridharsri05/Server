@@ -5,7 +5,7 @@ var config = require("../config");
 
 var generateToken = function (userId, role) {
     return jwt.sign({ userId: userId, role: role }, config.JWT_SECRET, {
-        expiresIn: "1h",
+        expiresIn: "7d", // stay signed in for a week (was 1h)
     });
 };
 

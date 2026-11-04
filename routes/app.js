@@ -23,6 +23,15 @@ router.post("/login", authController.login);
 
 // Protected Route
 router.get("/dashboard", authenticateToken, dashboardController.dashboard);
+// Library (watchlist / liked / history). History routes must come before /library/:list.
+const library = require("../controllers/libraryController");
+router.get("/library", authenticateToken, library.getLibrary);
+router.post("/library/history", authenticateToken, library.upsertHistory);
+router.delete("/library/history", authenticateToken, library.clearHistory);
+router.delete("/library/history/:imdbId", authenticateToken, library.removeHistoryItem);
+router.post("/library/:list", authenticateToken, library.addToList);
+router.delete("/library/:list/:imdbId", authenticateToken, library.removeFromList);
+
 router.get("/getUsers", exampleController.getAllUsers);
 router.post("/getLatestMovies", movieList.getLatestMovies)
 router.post("/getAddedMovies", movieList.getAddedMovies)

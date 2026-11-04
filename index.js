@@ -50,10 +50,14 @@ mongoose
     });
 
 
-// const port = 3001;
-// app.listen(port, () => {
-//     console.log(`Server is running on port ${port}`);
-// });
+// Listen only when run directly (`node index.js`, local dev). On Vercel the app is imported
+// via module.exports and served by the platform, so it must not call listen itself.
+if (require.main === module) {
+    const port = 3001;
+    app.listen(port, () => {
+        console.log(`Server is running on port ${port}`);
+    });
+}
 
 // Use routes
 app.use("/", routes);
