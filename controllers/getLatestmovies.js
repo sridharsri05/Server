@@ -1,12 +1,31 @@
 const axios = require("axios");
 const { resolvePoster } = require("../utils/resolvePoster");
+const { BoundedCache } = require("../utils/boundedCache");
 
-const OMBD_API_KEY = "8d58c823";
+const MAX_IDS = 60; // max imdbIds accepted per request
+const CONCURRENCY = 8; // max simultaneous OMDb requests per request
+const ID_RE = /^[A-Za-z0-9_-]{1,32}$/;
+
+// Runs fn over items with at most `limit` in flight; preserves order.
+const mapPool = async (items, limit, fn) => {
+    const results = new Array(items.length);
+    let next = 0;
+    const worker = async () => {
+        while (next < items.length) {
+            const i = next++;
+            results[i] = await fn(items[i]);
+        }
+    };
+    await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+    return results;
+};
+
+const { OMDB_API_KEY: OMBD_API_KEY } = require("../config");
 // const OMBD_API_KEY = "78532d38";
 
 // imdbId -> { data, expires }. Movie details rarely change; caching makes repeat page loads fast
 // and keeps us well under OMDb's daily request limit.
-const omdbCache = new Map();
+const omdbCache = new BoundedCache(2000); // size-capped (LRU)
 const OMDB_TTL_MS = 6 * 60 * 60 * 1000;
 
 const getOmdbDetails = async (imdbId) => {
@@ -26,10 +45,22 @@ const getOmdbDetails = async (imdbId) => {
 // Fetches OMDb details for each IMDb ID in req.body.imdbIds and ensures Poster is a working URL (or null).
 // Clients send a whole page of IDs in one request, so one bad ID is skipped instead of failing the batch.
 const fetchTitlesWithPosters = async (req, res) => {
-    const imdbIds = Array.isArray(req.body?.imdbIds) ? req.body.imdbIds : [];
+    const raw = req.body?.imdbIds;
+    const imdbIds = Array.isArray(raw) ? raw : [];
+    if (raw !== undefined && !Array.isArray(raw)) {
+        return res.status(400).json({ success: false, message: "imdbIds must be an array of strings" });
+    }
+    if (imdbIds.length > MAX_IDS) {
+        return res.status(400).json({ success: false, message: `imdbIds may contain at most ${MAX_IDS} ids` });
+    }
+    if (!imdbIds.every((id) => typeof id === "string" && ID_RE.test(id))) {
+        return res.status(400).json({ success: false, message: "imdbIds must be an array of valid IMDb id strings" });
+    }
     try {
-        const movieDetails = await Promise.all(
-            imdbIds.map(async (imdbId) => {
+        const movieDetails = await mapPool(
+            imdbIds,
+            CONCURRENCY,
+            async (imdbId) => {
                 try {
                     const data = await getOmdbDetails(imdbId);
                     if (data.Response === "False") return null;
@@ -39,7 +70,7 @@ const fetchTitlesWithPosters = async (req, res) => {
                     console.error(`OMDb lookup failed for ${imdbId}:`, error.message);
                     return null;
                 }
-            })
+            }
         );
 
         res.status(200).json(movieDetails.filter(Boolean));

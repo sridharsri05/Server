@@ -8,6 +8,7 @@ const FRONT_END_URL = process.env.FRONT_END_URL;
 const SCRAPER_API_KEY = process.env.SCRAPER_API_KEY;
 // Used to fill in posters when OMDb's are missing/broken. Defaults to the key the frontend already ships.
 const TMDB_API_KEY = process.env.TMDB_API_KEY || "bb666e560f71cab382892f0e4efa696e";
+const OMDB_API_KEY = process.env.OMDB_API_KEY || "8d58c823";
 
 // Primary vidsrc domain — change this in Vercel env vars when the domain changes
 // No redeployment needed, just update the env var and redeploy
@@ -19,4 +20,7 @@ const VIDSRC_FALLBACKS = (process.env.VIDSRC_FALLBACKS || "https://vidsrc.net,ht
     .map(d => d.trim())
     .filter(Boolean);
 
-module.exports = { MONGODB_URI, JWT_SECRET, EMAIL_USER, EMAIL_PASSWORD, FRONT_END_URL, SCRAPER_API_KEY, TMDB_API_KEY, VIDSRC_DOMAIN, VIDSRC_FALLBACKS };
+// Firebase project whose ID tokens we accept for Google sign-in (same as the frontend Firebase config).
+const FIREBASE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID || "moviehub-e304c";
+
+module.exports = { FIREBASE_PROJECT_ID, MONGODB_URI, JWT_SECRET, EMAIL_USER, EMAIL_PASSWORD, FRONT_END_URL, SCRAPER_API_KEY, TMDB_API_KEY, OMDB_API_KEY, VIDSRC_DOMAIN, VIDSRC_FALLBACKS };

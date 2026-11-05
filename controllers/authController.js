@@ -6,11 +6,16 @@ const jwtUtils = require("../utils/jwtUtils.js");
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const config = require("../config")
+const { isEmail, isNonEmptyString, isString, badRequest } = require("../utils/validate.js");
+const { verifyFirebaseIdToken } = require("../utils/firebaseVerify.js");
 
 const login = async function (req, res) {
     try {
-        const { email, password } = req.body;
-        const user = await User.findOne({ email });
+        const { email, password } = req.body || {};
+        if (!isEmail(email) || !isNonEmptyString(password, 200)) {
+            return badRequest(res, 'A valid email and password (strings) are required');
+        }
+        const user = await User.findOne({ email: email.toLowerCase() });
 
         if (!user) {
             return res.status(401).json({ status: 'error', message: 'User not found' });
@@ -49,10 +54,31 @@ const login = async function (req, res) {
 };
 const google = async (req, res) => {
     try {
-        const { email, username, photo } = req.body;
+        // Identity comes ONLY from a verified Firebase ID token, never from the request body.
+        const { idToken } = req.body || {};
+        if (idToken === undefined || idToken === null || idToken === "") {
+            return badRequest(res, 'idToken is required');
+        }
+        if (!isNonEmptyString(idToken, 8192)) {
+            return badRequest(res, 'idToken must be a string');
+        }
+
+        let claims;
+        try {
+            claims = await verifyFirebaseIdToken(idToken);
+        } catch (verifyError) {
+            return res.status(401).json({ status: 'error', message: 'Invalid or expired Google sign-in token' });
+        }
+        if (!isEmail(claims.email) || claims.email_verified !== true) {
+            return res.status(401).json({ status: 'error', message: 'Google account email is not verified' });
+        }
+
+        const email = claims.email.toLowerCase();
+        const name = isString(claims.name) && claims.name.trim() ? claims.name : email.split("@")[0];
+        const photo = isString(claims.picture) ? claims.picture : undefined;
+
         const user = await User.findOne({ email });
         if (user) {
-            // If the user exists, generate a token for the user
             const token = jwtUtils.generateToken({
                 _id: user._id,
                 username: user.username,
@@ -60,12 +86,7 @@ const google = async (req, res) => {
                 role: user.role,
                 profilePicture: user.profilePicture,
             });
-
-            // Since the user exists, you probably want to return some user information
-            // excluding the password for security reasons
             const { password: hashedPassword, ...rest } = user._doc;
-
-            // Return the user information and the token
             res.status(200).json({
                 status: "success",
                 message: "User found",
@@ -73,54 +94,49 @@ const google = async (req, res) => {
                 user: rest,
             });
         } else {
-            // If the user doesn't exist, create a new user
-            const generatePassword = Math.random().toString(36).slice(-8);
-            const hashedPassword = await bcrypt.hash(generatePassword, 10); // Await the hashing operation
+            const generatePassword = crypto.randomBytes(24).toString('hex');
+            const hashedPassword = await bcrypt.hash(generatePassword, 10);
 
-            // Create a new user with the provided details
             const newUser = new User({
-                username: username.split(" ").join("").toLowerCase(),
-                email: email,
+                username: name.split(" ").join("").toLowerCase(),
+                email,
                 password: hashedPassword,
                 profilePicture: photo,
                 role: 'user',
             });
-
-            // Save the new user to the database
             await newUser.save();
 
-            // Generate a token for the new user
-            const token = jwtUtils.generateToken(
-                {
-                    _id: newUser._id,
-                    username: newUser.username,
-                    email: newUser.email,
-                    role: newUser.role,
-                    profilePicture: newUser.profilePicture,
-
-                });
-
-            // Return the token and the user information (excluding password)
+            const token = jwtUtils.generateToken({
+                _id: newUser._id,
+                username: newUser.username,
+                email: newUser.email,
+                role: newUser.role,
+                profilePicture: newUser.profilePicture,
+            });
             const { password: hashedPassword2, ...rest } = newUser._doc;
             res.status(200).json({
                 status: "success",
                 message: "User successfully created",
                 token,
-                user: rest, // Return the user information
+                user: rest,
             });
         }
     } catch (error) {
         console.error(error);
-        res.status(500).json({ status: 'error', message: error });
+        res.status(500).json({ status: 'error', message: 'Internal Server Error' });
     }
 }
 
 const signup = async function (req, res) {
     try {
-        const { username, email, password, role } = req.body;
+        const { username, email, password } = req.body || {};
+        if (!isNonEmptyString(username, 100) || !isEmail(email) || !isNonEmptyString(password, 200)) {
+            return badRequest(res, 'username, a valid email and password (strings) are required');
+        }
+        const normEmail = email.toLowerCase();
 
         // Check if the email is already registered
-        const existingUser = await User.findOne({ email });
+        const existingUser = await User.findOne({ email: normEmail });
         if (existingUser) {
             return res.status(400).json({ status: 'error', message: 'Email already registered' });
         }
@@ -129,9 +145,9 @@ const signup = async function (req, res) {
 
         const newUser = new User({
             username,
-            email,
+            email: normEmail,
             password: hashedPassword,
-            role: role || 'user',
+            role: 'user', // never trust a client-supplied role (privilege escalation)
         });
 
         await newUser.save();
@@ -146,11 +162,14 @@ const signup = async function (req, res) {
 
 
 const forgotPassword = async (req, res) => {
-    const { email } = req.body;
+    const { email } = req.body || {};
+    if (!isEmail(email)) {
+        return badRequest(res, 'A valid email (string) is required');
+    }
 
     try {
         // Check if user exists
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email: email.toLowerCase() });
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
@@ -213,7 +232,10 @@ const forgotPassword = async (req, res) => {
 
 const resetPassword = async (req, res) => {
     const { token } = req.params;
-    const { password } = req.body;
+    const { password } = req.body || {};
+    if (!isNonEmptyString(token, 200) || !isNonEmptyString(password, 200)) {
+        return badRequest(res, 'A valid token and password (strings) are required');
+    }
 
     try {
         // Validate the token and check if it's expired

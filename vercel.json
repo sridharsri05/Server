@@ -9,21 +9,7 @@
   "routes": [
     {
       "src": "/(.*)",
-      "methods": ["OPTIONS"],
-      "headers": {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
-        "Access-Control-Max-Age": "86400"
-      },
-      "status": 204
-    },
-    {
-      "src": "/(.*)",
-      "dest": "index.js",
-      "headers": {
-        "Access-Control-Allow-Origin": "*"
-      }
+      "dest": "index.js"
     }
   ]
 }

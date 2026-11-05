@@ -3,13 +3,20 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const path = require("path")
+const mongoSanitize = require("express-mongo-sanitize");
 
 const config = require("./config.js");
 const routes = require("./routes/app.js");
+const { generalLimiter } = require("./middleware/rateLimiters.js");
 
 const app = express();
 
-app.use(express.json());
+// Vercel sits behind one proxy hop; needed so rate limiting sees the real client IP.
+app.set("trust proxy", 1);
+
+app.use(express.json({ limit: "100kb" }));
+// Strip keys starting with "$" or containing "." from body/query/params (NoSQL operator injection).
+app.use(mongoSanitize());
 
 
 const allowedOrigins = [
@@ -37,17 +44,25 @@ app.use(cors(corsOptions));
 // Explicitly handle all OPTIONS preflight requests
 app.options("*", cors(corsOptions));
 
+// General API rate limit (per IP). In-memory => per serverless instance, best effort.
+app.use(generalLimiter);
+
 app.use(express.static(path.join(__dirname, "public")));
 
-// Connect to MongoDB
-mongoose
-    .connect(config.MONGODB_URI)
-    .then(() => {
-        console.log("MongoDB connected successfully");
-    })
-    .catch((error) => {
-        console.error("MongoDB connection error:", error);
-    });
+// Connect to MongoDB. The connection promise is cached on `global` so warm serverless invocations
+// (and hot reloads) reuse it instead of reconnecting.
+if (!global._mongooseConn) {
+    global._mongooseConn = mongoose
+        .connect(config.MONGODB_URI)
+        .then((m) => {
+            console.log("MongoDB connected successfully");
+            return m;
+        })
+        .catch((error) => {
+            global._mongooseConn = null; // allow a retry on the next cold path
+            console.error("MongoDB connection error:", error);
+        });
+}
 
 
 // Listen only when run directly (`node index.js`, local dev). On Vercel the app is imported
@@ -82,6 +97,11 @@ app.use((err, req, res, next) => {
     }
 
 
+    // Malformed JSON body etc.
+    if (err.type === "entity.parse.failed" || err.status === 400) {
+        return res.status(400).json({ success: false, message: "Invalid request body." });
+    }
+
     if (err.name === "MongoError") {
         return res.status(500).json({
             success: false,
@@ -89,6 +109,8 @@ app.use((err, req, res, next) => {
             error: err.message,
         });
     }
+
+    return res.status(500).json({ success: false, message: "Internal server error." });
 })
 
 module.exports = app;

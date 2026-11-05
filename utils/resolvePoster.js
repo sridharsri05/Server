@@ -1,11 +1,13 @@
 const axios = require("axios");
 const { imdbImage } = require("../controllers/imdbImage");
 const { TMDB_API_KEY } = require("../config");
+const { BoundedCache } = require("./boundedCache");
 
 const TMDB_IMG = "https://image.tmdb.org/t/p/w500";
 
 // imdbId -> resolved poster URL (or null). Avoids re-checking on every page load.
-const cache = new Map();
+// Size-capped (LRU) so a long-lived instance can't grow without bound.
+const cache = new BoundedCache(2000);
 
 // OMDb often returns stale m.media-amazon.com links that 404, so verify before trusting.
 const isImageReachable = async (url) => {

@@ -1,6 +1,6 @@
 // controllers / dashboardControllers.js
 const dashboard = (req, res) => {
-    const { role } = req.user;
+    const role = (req.user.userId && req.user.userId.role) || req.user.role;
     if (role === "admin") {
         // Handle admin-specific logic
         res.json({ message: "Welcome to the admin dashboard", user: req.user });

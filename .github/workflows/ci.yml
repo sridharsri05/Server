@@ -1,0 +1,29 @@
+name: CI
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+jobs:
+  boot-check:
+    name: Boot check (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - node: 22
+            experimental: false
+          # Early warning for future runtime breakage; never blocks.
+          - node: 26
+            experimental: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      # Catches crash-on-import. No MONGODB_URI needed; connect failure is logged.
+      - run: node -e "require('./index.js'); setTimeout(() => process.exit(0), 3000)"
