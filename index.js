@@ -45,9 +45,12 @@ app.use(cors(corsOptions));
 app.options("*", cors(corsOptions));
 
 // Health check: cheap (no DB query), never cached, registered before the rate limiter.
-app.get("/health", (req, res) => {
+app.get("/health", async (req, res) => {
+    // A freshly started instance may still be connecting: wait briefly so monitors don't see a false 503.
+    if (mongoose.connection.readyState !== 1) {
+        await Promise.race([connectDb().catch(() => {}), new Promise((r) => setTimeout(r, 4000))]);
+    }
     const connected = mongoose.connection.readyState === 1;
-    if (!connected) connectDb().catch(() => {}); // nudge a reconnect; the next check will show it
     res.set("Cache-Control", "no-store");
     res.status(connected ? 200 : 503).json({
         status: "ok",
