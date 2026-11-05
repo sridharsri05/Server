@@ -47,6 +47,7 @@ app.options("*", cors(corsOptions));
 // Health check: cheap (no DB query), never cached, registered before the rate limiter.
 app.get("/health", (req, res) => {
     const connected = mongoose.connection.readyState === 1;
+    if (!connected) connectDb().catch(() => {}); // nudge a reconnect; the next check will show it
     res.set("Cache-Control", "no-store");
     res.status(connected ? 200 : 503).json({
         status: "ok",
@@ -62,23 +63,43 @@ app.use(generalLimiter);
 app.use(express.static(path.join(__dirname, "public")));
 
 // Connect to MongoDB. The connection promise is cached on `global` so warm serverless invocations
-// (and hot reloads) reuse it instead of reconnecting.
-if (!global._mongooseConn) {
-    global._mongooseConn = mongoose
-        .connect(config.MONGODB_URI, {
-            serverSelectionTimeoutMS: 5000, // fail fast instead of hanging ~30s when the DB is unreachable
-            socketTimeoutMS: 20000,
-            maxPoolSize: 10, // serverless: each instance holds its own pool, keep it small
-        })
-        .then((m) => {
-            console.log("MongoDB connected successfully");
-            return m;
-        })
-        .catch((error) => {
-            global._mongooseConn = null; // allow a retry on the next cold path
-            console.error("MongoDB connection error:", error);
-        });
+// reuse it. If a connect attempt fails (e.g. a slow cold start), the next request that needs the DB
+// retries, instead of the instance staying disconnected and hanging requests until Vercel kills them.
+mongoose.set("bufferCommands", false); // never queue queries while disconnected: fail fast instead of a 10s 504
+function connectDb() {
+    if (mongoose.connection.readyState === 1) return Promise.resolve();
+    if (!global._mongooseConn) {
+        global._mongooseConn = mongoose
+            .connect(config.MONGODB_URI, {
+                serverSelectionTimeoutMS: 8000, // under Vercel's 10s limit, generous enough for cold starts
+                socketTimeoutMS: 20000,
+                maxPoolSize: 10, // serverless: each instance holds its own pool, keep it small
+            })
+            .then((m) => {
+                console.log("MongoDB connected successfully");
+                return m;
+            })
+            .catch((error) => {
+                global._mongooseConn = null; // the next DB request retries
+                console.error("MongoDB connection error:", error.message);
+                throw error;
+            });
+    }
+    return global._mongooseConn;
 }
+connectDb().catch(() => {}); // start connecting as soon as the instance boots
+
+// Routes that don't touch MongoDB never wait for it (getLatestMovies only uses it as an optional cache).
+const NO_DB = /^\/($|health|tmdb\/|omdb|api\/vapi\/|getLatestMovies|getAddedMovies|getAddedTVShows|favicon)/;
+app.use(async (req, res, next) => {
+    if (NO_DB.test(req.path)) return next();
+    try {
+        await connectDb();
+        next();
+    } catch {
+        res.status(503).json({ success: false, message: "Database temporarily unavailable. Please try again." });
+    }
+});
 
 
 // Listen only when run directly (`node index.js`, local dev). On Vercel the app is imported
