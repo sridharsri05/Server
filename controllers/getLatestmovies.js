@@ -1,4 +1,6 @@
 const axios = require("axios");
+const mongoose = require("mongoose");
+const OmdbCache = require("../models/OmdbCache");
 const { resolvePoster } = require("../utils/resolvePoster");
 const { BoundedCache } = require("../utils/boundedCache");
 
@@ -28,17 +30,66 @@ const { OMDB_API_KEY: OMBD_API_KEY } = require("../config");
 const omdbCache = new BoundedCache(2000); // size-capped (LRU)
 const OMDB_TTL_MS = 6 * 60 * 60 * 1000;
 
-const getOmdbDetails = async (imdbId) => {
-    const hit = omdbCache.get(imdbId);
-    if (hit && hit.expires > Date.now()) return { ...hit.data };
+const MONGO_TIMEOUT_MS = 2000; // Mongo is only a cache: never let it slow a request down
 
+const withTimeout = (promise, ms) =>
+    Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), ms))]);
+
+// One bulk query for the ids not in memory. Fails open: returns an empty Map if Mongo is down or slow.
+const loadFromMongo = async (ids) => {
+    const found = new Map();
+    if (!ids.length || mongoose.connection.readyState !== 1) return found;
+    try {
+        const docs = await withTimeout(
+            OmdbCache.find({ imdbId: { $in: ids }, expiresAt: { $gt: new Date() } })
+                .maxTimeMS(MONGO_TIMEOUT_MS)
+                .lean(),
+            MONGO_TIMEOUT_MS
+        );
+        for (const d of docs) found.set(d.imdbId, d.data);
+    } catch (error) {
+        console.warn("OMDb Mongo cache read skipped:", error.message);
+    }
+    return found;
+};
+
+// Fire-and-forget write-through; errors are only logged.
+const saveToMongo = (imdbId, data) => {
+    if (mongoose.connection.readyState !== 1) return;
+    OmdbCache.updateOne(
+        { imdbId },
+        { $set: { data, expiresAt: new Date(Date.now() + OMDB_TTL_MS) } },
+        { upsert: true }
+    )
+        .maxTimeMS(MONGO_TIMEOUT_MS)
+        .catch((error) => console.warn("OMDb Mongo cache write skipped:", error.message));
+};
+
+// Lookup order: memory -> Mongo (prefetched in bulk) -> OMDb. Cached values already contain the resolved Poster.
+// Returns the final movie object, or null when OMDb has no such title.
+const getOmdbDetails = async (imdbId, mongoHits) => {
+    const hit = omdbCache.get(imdbId);
+    if (hit && hit.expires > Date.now()) {
+        console.log(`[omdb-cache] ${imdbId} memory`);
+        return { ...hit.data };
+    }
+
+    const fromMongo = mongoHits.get(imdbId);
+    if (fromMongo) {
+        console.log(`[omdb-cache] ${imdbId} mongo`);
+        omdbCache.set(imdbId, { data: fromMongo, expires: Date.now() + OMDB_TTL_MS });
+        return { ...fromMongo };
+    }
+
+    console.log(`[omdb-cache] ${imdbId} omdb`);
     const { data } = await axios.get(
         `https://www.omdbapi.com/?apikey=${OMBD_API_KEY}&i=${imdbId}`,
         { timeout: 10000 }
     );
-    if (data.Response !== "False") {
-        omdbCache.set(imdbId, { data, expires: Date.now() + OMDB_TTL_MS });
-    }
+    if (data.Response === "False") return null;
+    data.Poster = await resolvePoster(imdbId, data.Poster);
+    omdbCache.set(imdbId, { data, expires: Date.now() + OMDB_TTL_MS });
+    saveToMongo(imdbId, data);
     return { ...data };
 };
 
@@ -57,15 +108,18 @@ const fetchTitlesWithPosters = async (req, res) => {
         return res.status(400).json({ success: false, message: "imdbIds must be an array of valid IMDb id strings" });
     }
     try {
+        const uniqueIds = [...new Set(imdbIds)];
+        const missing = uniqueIds.filter((id) => {
+            const hit = omdbCache.get(id);
+            return !(hit && hit.expires > Date.now());
+        });
+        const mongoHits = await loadFromMongo(missing);
         const movieDetails = await mapPool(
             imdbIds,
             CONCURRENCY,
             async (imdbId) => {
                 try {
-                    const data = await getOmdbDetails(imdbId);
-                    if (data.Response === "False") return null;
-                    data.Poster = await resolvePoster(imdbId, data.Poster);
-                    return data;
+                    return await getOmdbDetails(imdbId, mongoHits);
                 } catch (error) {
                     console.error(`OMDb lookup failed for ${imdbId}:`, error.message);
                     return null;

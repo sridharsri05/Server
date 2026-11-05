@@ -17,7 +17,7 @@ const make = (windowMs, limit, message, extra = {}) =>
 // Applied to every route.
 // The TMDB/OMDb proxy routes have their own (per-minute) limiter, so a page load of many TMDB calls does not eat this budget.
 const generalLimiter = make(15 * 60 * 1000, 300, "Too many requests, please try again later.", {
-    skip: (req) => req.path.startsWith("/tmdb/") || req.path === "/omdb",
+    skip: (req) => req.path.startsWith("/tmdb/") || req.path === "/omdb" || req.path === "/health",
 });
 // login, signup, googleSignin, forgot-password, reset-password
 const authLimiter = make(15 * 60 * 1000, 10, "Too many authentication attempts, please try again in 15 minutes.");

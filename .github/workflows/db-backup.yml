@@ -1,0 +1,64 @@
+# Weekly MongoDB backup: mongodump -> gzip archive -> AES-256 encrypted -> workflow artifact (kept 30 days).
+#
+# SETUP REQUIRED (GitHub repo -> Settings -> Secrets and variables -> Actions -> New repository secret):
+#   MONGODB_URI        connection string of the database to back up
+#   BACKUP_PASSPHRASE  long random passphrase used to encrypt the archive (store it in a password manager)
+# Until BOTH exist the job skips with a notice instead of failing.
+#
+# WHY ENCRYPTED: this repository is public, and artifacts of public repos can be downloaded by any
+# signed-in GitHub user. The dump contains user emails and password hashes, so it is never uploaded
+# in plain form. Only the encrypted .gpg file is uploaded.
+#
+# RESTORE:
+#   gpg --batch --decrypt --passphrase "<BACKUP_PASSPHRASE>" backup.gz.gpg > backup.gz
+#   mongorestore --uri "<MONGODB_URI>" --archive=backup.gz --gzip
+name: DB Backup
+
+on:
+  schedule:
+    - cron: "0 2 * * 0" # Sundays 02:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      MONGODB_URI: ${{ secrets.MONGODB_URI }}
+      BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+    steps:
+      - name: Check secrets
+        id: check
+        run: |
+          if [ -z "$MONGODB_URI" ] || [ -z "$BACKUP_PASSPHRASE" ]; then
+            echo "::notice title=Backup skipped::Set both MONGODB_URI and BACKUP_PASSPHRASE repository secrets (Settings > Secrets and variables > Actions) to enable encrypted backups."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install MongoDB Database Tools
+        if: steps.check.outputs.enabled == 'true'
+        run: |
+          curl -fsSL -o mdt.deb https://fastdl.mongodb.org/tools/db/mongodb-database-tools-ubuntu2204-x86_64-100.10.0.deb
+          sudo apt-get install -y ./mdt.deb
+          mongodump --version
+
+      - name: Dump and encrypt database
+        if: steps.check.outputs.enabled == 'true'
+        run: |
+          mongodump --uri "$MONGODB_URI" --archive=backup.gz --gzip
+          gpg --batch --yes --symmetric --cipher-algo AES256 --passphrase "$BACKUP_PASSPHRASE" -o backup.gz.gpg backup.gz
+          rm -f backup.gz   # never leave the plain dump on the runner
+
+      - name: Upload encrypted backup
+        if: steps.check.outputs.enabled == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: mongodb-backup-${{ github.run_id }}
+          path: backup.gz.gpg
+          retention-days: 30
+          if-no-files-found: error

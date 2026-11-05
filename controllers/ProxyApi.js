@@ -1,6 +1,12 @@
 const axios = require('axios');
 const config = require('../config');
 
+const CACHE_OK = 'public, s-maxage=600, stale-while-revalidate=3600';
+const sendCached = (res, data) => {
+    res.set('Cache-Control', CACHE_OK);
+    res.json(data);
+};
+
 /**
  * Try fetching a path from the primary domain first, then fallbacks.
  * Returns the first successful response.
@@ -33,10 +39,10 @@ const proxyApi = async (req, res) => {
         const result = await fetchWithFallback(
             (domain) => `${domain}/movies/latest/page-${page}.json`
         );
-        res.json(result.data);
+        sendCached(res, result.data);
     } catch (err) {
         console.error("❌ All sources failed for movies:", err.message);
-        res.status(500).json({
+        res.set('Cache-Control', 'no-store').status(500).json({
             error: 'proxy movie server error',
             messages: [err.message],
         });
@@ -50,10 +56,10 @@ const proxyAddMovies = async (req, res) => {
         const result = await fetchWithFallback(
             (domain) => `${domain}/vapi/movie/add/${page}`
         );
-        res.json(result.data);
+        sendCached(res, result.data);
     } catch (err) {
         console.error("❌ All sources failed for addMovies:", err.message);
-        res.status(500).json({ error: 'proxy addMovie server error', message: err.message });
+        res.set('Cache-Control', 'no-store').status(500).json({ error: 'proxy addMovie server error', message: err.message });
     }
 };
 
@@ -64,10 +70,10 @@ const proxyTvApi = async (req, res) => {
         const result = await fetchWithFallback(
             (domain) => `${domain}/vapi/tv/new/${page}`
         );
-        res.json(result.data);
+        sendCached(res, result.data);
     } catch (err) {
         console.error("❌ All sources failed for TV:", err.message);
-        res.status(500).json({ error: 'proxyTv server error', message: err.message });
+        res.set('Cache-Control', 'no-store').status(500).json({ error: 'proxyTv server error', message: err.message });
     }
 };
 
@@ -84,10 +90,10 @@ const proxyTvAdd = async (req, res) => {
                 },
             }
         );
-        res.json(result.data);
+        sendCached(res, result.data);
     } catch (err) {
         console.error("❌ All sources failed for proxyTvAdd:", err.message);
-        res.status(500).json({
+        res.set('Cache-Control', 'no-store').status(500).json({
             error: 'proxyTvAdd server error',
             message: err.message,
         });

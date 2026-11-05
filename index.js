@@ -44,6 +44,18 @@ app.use(cors(corsOptions));
 // Explicitly handle all OPTIONS preflight requests
 app.options("*", cors(corsOptions));
 
+// Health check: cheap (no DB query), never cached, registered before the rate limiter.
+app.get("/health", (req, res) => {
+    const connected = mongoose.connection.readyState === 1;
+    res.set("Cache-Control", "no-store");
+    res.status(connected ? 200 : 503).json({
+        status: "ok",
+        db: connected ? "connected" : "disconnected",
+        uptime: process.uptime(),
+        time: new Date().toISOString(),
+    });
+});
+
 // General API rate limit (per IP). In-memory => per serverless instance, best effort.
 app.use(generalLimiter);
 
@@ -53,7 +65,11 @@ app.use(express.static(path.join(__dirname, "public")));
 // (and hot reloads) reuse it instead of reconnecting.
 if (!global._mongooseConn) {
     global._mongooseConn = mongoose
-        .connect(config.MONGODB_URI)
+        .connect(config.MONGODB_URI, {
+            serverSelectionTimeoutMS: 5000, // fail fast instead of hanging ~30s when the DB is unreachable
+            socketTimeoutMS: 20000,
+            maxPoolSize: 10, // serverless: each instance holds its own pool, keep it small
+        })
         .then((m) => {
             console.log("MongoDB connected successfully");
             return m;

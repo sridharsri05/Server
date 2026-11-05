@@ -11,6 +11,7 @@ const { proxyApi, proxyAddMovies, proxyTvApi, proxyTvAdd } = require("../control
 const updateUserProfile = require("../controllers/updateuser");
 const jwtUtils = require("../utils/jwtUtils");
 const User = require("../models/User");
+const Library = require("../models/Library");
 const { default: axios } = require("axios");
 const router = express.Router();
 router.use("/", require("./mediaProxy")); // TMDB/OMDb proxy (/tmdb/*, /omdb)
@@ -89,7 +90,9 @@ router.delete("/deleteUser/:userId", authenticateToken, requireSelfOrAdmin, asyn
     if (!isObjectId(userId)) return badRequest(res, 'Invalid user id');
 
     try {
-        await User.findByIdAndDelete(userId);
+        const deleted = await User.findByIdAndDelete(userId);
+        if (!deleted) return res.status(404).json({ message: 'User not found' });
+        await Library.deleteOne({ user: userId });
         res.status(200).json({ message: 'User account has been deleted successfully.....' });
     } catch (error) {
         console.error('Error deleting user profile:', error);
